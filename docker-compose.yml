@@ -1,0 +1,52 @@
+version: '3'
+
+services:
+  backend:
+    build:
+      context: ./
+      dockerfile: docker/Dockerfile
+    command: bash -c 'composer install --no-interaction && chown -R www-data:www-data vendor/ storage/ bootstrap/ && apache2-foreground'
+    image: backend
+    container_name: backend
+    environment:
+      PHP_OPCACHE_VALIDATE_TIMESTAMPS: 1
+      COMPOSER_MEMORY_LIMIT: -1
+      XDEBUG_CONFIG: "remote_host=10.103.0.1 remote_enable=1"
+      PHP_IDE_CONFIG: "serverName=Docker"
+    ports:
+      - 8000:80
+    depends_on:
+      - redis
+      - mysql
+    volumes:
+      - ./:/var/www
+
+  mysql:
+    image: mysql:8.0.20
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ALLOW_EMPTY_PASSWORD: 1
+    ports:
+      - "3306:3306"
+    cap_add:
+      - sys_nice
+    volumes:
+#      - ./docker/mysql-initdb:/docker-entrypoint-initdb.d
+      - dbdata:/var/lib/mysql
+
+  redis:
+    image: redis:6.0.7-alpine
+
+volumes:
+  dbdata:
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.104.0.0/16

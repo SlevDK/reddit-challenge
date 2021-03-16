@@ -1,0 +1,11 @@
+JWT for authorization
+
+database architecture
+    * users
+    * board
+    * thread
+    * comment
+    * tag
+
+    * moderators list - pivot
+    * ban list - pivot
